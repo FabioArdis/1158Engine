@@ -185,10 +185,17 @@ void Renderer::Render(Scene* scene)
 	if (m_camera)
 	{
 		// Camera movement
-		if (m_inputManager->IsKeyPressed(GLFW_KEY_W))	m_camera->MoveForward();
-		if (m_inputManager->IsKeyPressed(GLFW_KEY_S))	m_camera->MoveBackward();
-		if (m_inputManager->IsKeyPressed(GLFW_KEY_A))	m_camera->MoveLeft();
-		if (m_inputManager->IsKeyPressed(GLFW_KEY_D))	m_camera->MoveRight();
+		if (m_editor->IsViewportFocused())
+		{
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_W))	m_camera->MoveForward();
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_S))	m_camera->MoveBackward();
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_A))	m_camera->MoveLeft();
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_D))	m_camera->MoveRight();
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_Q))	m_camera->RotateLeft();
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_E))	m_camera->RotateRight();
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_LEFT_CONTROL))	m_camera->MoveDown();
+			if (m_inputManager->IsKeyPressed(GLFW_KEY_SPACE))			m_camera->MoveUp();
+		}
 
 		// Prepare matrices
 		int screenWidth, screenHeight;

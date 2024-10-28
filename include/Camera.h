@@ -69,6 +69,14 @@ public:
 	*/
 	void MoveRight();
 
+	void MoveUp();
+
+	void MoveDown();
+
+	void RotateLeft();
+
+	void RotateRight();
+
 	/**
 	* @brief Rotates the camera based on mouse movement.
 	* 

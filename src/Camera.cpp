@@ -63,6 +63,24 @@ void Camera::MoveRight() {
 	m_position += glm::normalize(glm::cross(m_front, m_up)) * m_speed;
 }
 
+void Camera::RotateLeft() {
+    m_yaw -= 0.5f * 10.0f;
+    UpdateCameraVectors();
+}
+
+void Camera::RotateRight() {
+    m_yaw += 0.5f * 10.0f;
+    UpdateCameraVectors();
+}
+
+void Camera::MoveUp() {
+    m_position.y += m_speed;
+}
+
+void Camera::MoveDown() {
+    m_position.y -= m_speed;
+}
+
 // Rotate camera based on input deltas
 void Camera::Rotate(float deltaX, float deltaY)
 {
