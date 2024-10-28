@@ -79,7 +79,7 @@ public:
 	 */
 	void Update(float deltaTime)
 	{
-		std::cout << "Updating " << m_name << "." << std::endl;
+		//std::cout << "Updating " << m_name << "." << std::endl; Will reuse in the Log Dock
 		for (GameObject* gameObject : m_gameObjects)
 		{
 			gameObject->Update(deltaTime);

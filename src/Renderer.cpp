@@ -1,13 +1,20 @@
+// This file uses ImGui.
+// Copyright (c) 2014-2024 Omar Cornut
+// License: MIT (included in the LICENSE file)
+
 #include "Renderer.h"
 #include "TransformComponent.h"
 #include "MeshComponent.h"
 #include <iostream>
+#include "imgui.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <map>
 #include <iomanip>
 #include <sstream>
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 std::string FormatFPS(double fps, int decimalPlaces) {
 	std::stringstream stream;
@@ -44,7 +51,7 @@ bool Renderer::Initialize()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+	glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	// Create window
@@ -52,7 +59,7 @@ bool Renderer::Initialize()
 	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 	m_window = glfwCreateWindow(mode->width, mode->height, "1158Engine", nullptr, nullptr);
 
-	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); Will probably reuse this when we will catch the cursor inside the viewport
 
 	if (!m_window)
 	{
@@ -164,6 +171,12 @@ void Renderer::Render(Scene* scene)
 {
 	CalculateFPS();
 
+	if (m_editor)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, m_editor->GetFramebuffer());
+		glViewport(0, 0, m_editor->GetViewPortSize().x, m_editor->GetViewPortSize().y);
+	}
+
 	glClearColor(0, 0, 0, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -211,6 +224,14 @@ void Renderer::Render(Scene* scene)
 		}
 	}
 
+	if (m_editor)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		m_editor->Begin();
+		m_editor->Render(scene);
+		m_editor->End();
+	}
+	
 	glfwSwapBuffers(m_window);
 	glfwPollEvents();
 }

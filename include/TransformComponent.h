@@ -113,6 +113,16 @@ public:
 		return m_position;
 	}
 
+	glm::vec3 GetRotation() const
+	{
+		return m_rotation;
+	}
+
+	glm::vec3 GetScale() const
+	{
+		return m_scale;
+	}
+
 private:
 	glm::vec3 m_position; /**Position of the GameObject in 3D space. */
 	glm::vec3 m_rotation; /**Rotation of the GameObject in degrees (x, y, z axes). */

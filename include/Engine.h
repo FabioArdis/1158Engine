@@ -1,6 +1,7 @@
 #pragma once
 #include "Renderer.h"
 #include "SceneManager.h"
+#include "Editor.h"
 
 /**
  * @class Engine
@@ -54,6 +55,7 @@ public:
 private:
 	Renderer* m_renderer;    /**Pointer to the Renderer responsible for rendering graphics. */
 	SceneManager* m_sceneManager; /**Pointer to the SceneManager that handles scene transitions and GameObject management. */
+	Editor* m_editor;
 	bool m_isRunning;        /**Flag indicating whether the engine is currently running. */
 };
 

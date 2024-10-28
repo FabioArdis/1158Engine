@@ -36,7 +36,7 @@ unsigned int ShaderManager::GetShaderID(const std::string& name) {
 }
 
 void ShaderManager::UseShader(const std::string& name) {
-	std::cout << "shader " << name << " successfully selected." << std::endl;
+	//std::cout << "shader " << name << " successfully selected." << std::endl; Will reuse this into a Log dock
 	auto it = m_shaders.find(name);
 	if (it != m_shaders.end()) {
 		m_currentShader = it->second;

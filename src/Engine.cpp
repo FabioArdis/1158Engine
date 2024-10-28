@@ -17,8 +17,18 @@ bool Engine::Initialize()
 
 	if(!m_renderer->Initialize())
 	{
+		std::cerr << "renderer\n";
 		return false;
 	}
+
+	m_editor = new Editor();
+	if (!m_editor->Initialize(m_renderer->GetWindow()))
+	{
+		std::cerr << "editor\n";
+		return false;
+	}
+
+	m_renderer->SetEditor(m_editor);
 
 	m_sceneManager->CreateScene();
 
@@ -54,9 +64,15 @@ void Engine::Run()
 // Clean up renderer and scene manager
 void Engine::Shutdown()
 {
+	if (m_editor)
+	{
+		//m_editor->Shutdown();
+		delete m_editor;
+		m_editor = nullptr;
+	}
 	if (m_renderer)
 	{
-		m_renderer->Shutdown();
+		//m_renderer->Shutdown();
 		delete m_renderer;
 		m_renderer = nullptr;
 	}

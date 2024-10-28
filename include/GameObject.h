@@ -111,7 +111,7 @@ public:
      */
 	void Update(float deltaTime)
 	{
-		std::cout << "\tUpdating " << m_name << "." << std::endl;
+		//std::cout << "\tUpdating " << m_name << "." << std::endl; Will reuse this in the Log Dock
 		for (Component* component : m_components)
 		{
 			component->Update(deltaTime);

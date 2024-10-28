@@ -10,6 +10,7 @@
 #include "GameObject.h"
 #include "ShaderManager.h"
 #include "TextRenderer.h"
+#include "Editor.h"
 
 /**
  * @class Renderer
@@ -76,6 +77,10 @@ public:
 	*/
 	void CalculateFPS();
 
+	void SetEditor(Editor* editor) { m_editor = editor; }
+
+	GLFWwindow* GetWindow() const { return m_window; }
+
 private:
     GLFWwindow* m_window; 					/**Pointer to the GLFW window. */
     Shader* m_shader; 						/**Pointer to the active shader. */
@@ -84,6 +89,7 @@ private:
     InputManager* m_inputManager; 			/**Pointer to the input manager. */
     ShaderManager* m_shaderManager; 		/**Pointer to the shader manager. */
     TextRenderer* m_textRenderer; 			/**Pointer to the text renderer. */
+	Editor* m_editor;
 
     std::vector<Light> m_lights; 			/**Vector of lights in the scene. */
 	
