@@ -32,10 +32,10 @@ To get started with this project, follow these steps:
     
     Ensure you have the following dependencies installed on your system:
     - [CMake](https://cmake.org/): Build system
-    - [GLAD](https://glad.dav1d.de/): OpenGL function loader.
     - [GLM](https://github.com/g-truc/glm): Mathematics library for graphics software.
     - [GLFW](https://www.glfw.org/): Window management and input handling.
     - [FreeType](https://freetype.org/): Font rendering library.
+    - Although already included in this repo, check out the Docking branch of [dear ImGui](https://github.com/ocornut/imgui/tree/docking) (Editor UI) and [GLAD](https://glad.dav1d.de/) (OpenGL function loader)
 3. **Build the project**:
     ```bash
     mkdir build
