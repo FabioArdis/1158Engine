@@ -7,6 +7,7 @@
 // License: ISC (included in the LICENSE file)
 
 #include "Editor.h"
+#include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "IconsLucide.h"
@@ -151,24 +152,30 @@ void Editor::SetupDockspace()
     {
         first_time = false;
 
-        ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.2f, viewport->WorkSize.y * 0.75f));
-        ImGui::SetWindowPos(viewport->WorkPos);
+        ImGui::DockBuilderRemoveNode(dockspace_id);
+        ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
+        ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->WorkSize);
 
-        // Properties
-        ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.25f, viewport->WorkSize.y * 0.75f));
-        ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.75f, viewport->WorkPos.y));
+        // Split layout between the main docks
+        ImGuiID dock_main = dockspace_id;
+        ImGuiID dock_id_left_right = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Left, (viewport->WorkSize.x - viewport->WorkSize.x / 4) / viewport->WorkSize.x, nullptr, &dock_main);
+        ImGuiID dock_id_left = dock_id_left_right;
+        ImGuiID dock_id_right = dock_main;
 
-        // Viewport
-        ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.55f, viewport->WorkSize.y * 0.75f));
-        ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.2f, viewport->WorkPos.y));
+        // Split left side into top and bottom
+        ImGuiID dock_id_top = ImGui::DockBuilderSplitNode(dock_id_left, ImGuiDir_Up, (viewport->WorkSize.y / 2) / viewport->WorkSize.y, nullptr, &dock_id_left);
 
-        // Assets
-        ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y * 0.25f));
-        ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + viewport->WorkSize.y * 0.75f));    }
+        // Split top into Scene Hierarchy and Viewport
+        ImGuiID dock_id_scene = ImGui::DockBuilderSplitNode(dock_id_top, ImGuiDir_Left, (viewport->WorkSize.x / 2) / viewport->WorkSize.x, nullptr, &dock_id_top);
+
+        // Dock windows
+        ImGui::DockBuilderDockWindow("Scene Hierarchy", dock_id_scene);
+        ImGui::DockBuilderDockWindow("Viewport", dock_id_top);
+        ImGui::DockBuilderDockWindow("Properties", dock_id_right);
+        ImGui::DockBuilderDockWindow("Assets", dock_id_left);
+
+        ImGui::DockBuilderFinish(dockspace_id);
+    }
 }
 
 void Editor::SetupFramebuffer()
