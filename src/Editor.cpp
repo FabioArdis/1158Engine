@@ -2,10 +2,22 @@
 // Copyright (c) 2014-2024 Omar Cornut
 // License: MIT (included in the LICENSE file)
 
+// This file uses Lucide.
+// Copyright 2013-2022 Cole Bemis
+// License: ISC (included in the LICENSE file)
+
 #include "Editor.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "IconsLucide.h"
 #include "MeshComponent.h"
+#ifdef _WIN32
+    #include <windows.h>
+#elif defined(__linux__)
+    #include <unistd.h>
+    #include <linux/limits.h>
+#endif
+#include <string>
 
 Editor::Editor()
     : m_framebuffer(0), m_viewportColorTexture(0), 
@@ -19,13 +31,24 @@ Editor::~Editor()
     Shutdown();
 }
 
-bool Editor::Initialize(GLFWwindow *window)
+bool Editor::Initialize(GLFWwindow* window, SceneManager* sceneManager)
 {
+    m_sceneManager = sceneManager;
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    io.Fonts->AddFontDefault();
+    static const ImWchar icons_ranges[] = { ICON_MIN_LC, ICON_MAX_LC, 0 };
+    ImFontConfig icons_config;
+    icons_config.MergeMode = true;
+    icons_config.PixelSnapH = true;
+    icons_config.GlyphMinAdvanceX = 16.0f;
+    icons_config.GlyphOffset.y += 8.0f;
+    io.Fonts->AddFontFromFileTTF("fonts/lucide.ttf", 24.0f, &icons_config, icons_ranges);
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
@@ -35,6 +58,17 @@ bool Editor::Initialize(GLFWwindow *window)
     style.WindowRounding = 0.0f;
 
     SetupFramebuffer();
+
+    try {
+        m_rootPath = std::filesystem::current_path().string();
+        m_currentPath = m_rootPath;
+        UpdateDirectoryContents();
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Filesystem error during initialization: " << e.what() << std::endl;
+        m_rootPath = std::filesystem::current_path().string();
+        m_currentPath = m_rootPath;
+        UpdateDirectoryContents();
+    }
 
     return true;
 }
@@ -82,6 +116,9 @@ void Editor::Render(Scene *scene)
     ImGui::SetNextWindowDockID(ImGui::GetID("MyDockSpace"), ImGuiCond_FirstUseEver);
     RenderPropertiesPanel();
 
+    ImGui::SetNextWindowDockID(ImGui::GetID("MyDockSpace"), ImGuiCond_FirstUseEver);
+    RenderAssetsPanel();
+
     ImGui::End();
 }
 
@@ -115,16 +152,23 @@ void Editor::SetupDockspace()
         first_time = false;
 
         ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.2f, viewport->WorkSize.y));
+        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.2f, viewport->WorkSize.y * 0.75f));
         ImGui::SetWindowPos(viewport->WorkPos);
 
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.25f, viewport->WorkSize.y));
+        // Properties
+        ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.25f, viewport->WorkSize.y * 0.75f));
         ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.75f, viewport->WorkPos.y));
 
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.55f, viewport->WorkSize.y));
+        // Viewport
+        ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x * 0.55f, viewport->WorkSize.y * 0.75f));
         ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.2f, viewport->WorkPos.y));
-    }
+
+        // Assets
+        ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y * 0.25f));
+        ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + viewport->WorkSize.y * 0.75f));    }
 }
 
 void Editor::SetupFramebuffer()
@@ -211,11 +255,27 @@ void Editor::RenderSceneHierarchy(Scene *scene)
             flags |= ImGuiTreeNodeFlags_Selected;
         }
 
-        bool opened = ImGui::TreeNodeEx(object->GetName().c_str(), flags);
+        bool opened = ImGui::TreeNodeEx((object->GetName()).c_str(), flags);
 
-        if (ImGui::IsItemClicked())
+        std::string popupId = "item context menu" + std::to_string(object->GetID());
+        
+        if (ImGui::IsItemClicked(0) || ImGui::IsItemClicked(1))
         {
             m_selectedObject = object;
+        }
+
+        if (ImGui::IsItemClicked(1))
+        {
+            ImGui::OpenPopup(popupId.c_str());
+        }
+
+        if (ImGui::BeginPopup(popupId.c_str()))
+        {
+            if (ImGui::MenuItem("Delete"))
+            {
+                scene->RemoveGameObject(object);
+            }
+            ImGui::EndPopup();
         }
 
         if (opened)
@@ -235,7 +295,7 @@ void Editor::RenderPropertiesPanel()
 
         if (auto transform = m_selectedObject->GetComponent<TransformComponent>())
         {
-            if (ImGui::CollapsingHeader("Transform"))
+            if (ImGui::CollapsingHeader("Transform Component"))
             {
                 glm::vec3 position = transform->GetPosition();
                 glm::vec3 rotation = transform->GetRotation();
@@ -258,9 +318,32 @@ void Editor::RenderPropertiesPanel()
 
         if (auto mesh = m_selectedObject->GetComponent<MeshComponent>())
         {
-            if (ImGui::CollapsingHeader("Mesh"))
+            if (ImGui::CollapsingHeader("Mesh Component"))
             {
                 ImGui::Text("Mesh Component");
+            }
+        }
+
+        if (auto light = m_selectedObject->GetComponent<LightComponent>())
+        {
+            if (ImGui::CollapsingHeader("Light Component"))
+            {
+                glm::vec3 color = light->GetColor();
+                float intensity = light->GetIntensity();
+                float range = light->GetRange();
+
+                if (ImGui::ColorPicker3("ColorPicker", &color[0]))
+                {
+                    light->SetColor(color);
+                }
+                if (ImGui::DragFloat("Intensity", &intensity, 0.1f))
+                {
+                    light->SetIntensity(intensity);
+                }
+                if (ImGui::DragFloat("Range", &range, 0.1f))
+                {
+                    light->SetRange(range);
+                }
             }
         }
     }
@@ -274,22 +357,35 @@ void Editor::RenderMenuBar(Scene* scene)
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("New Scene")) {}
-            if (ImGui::MenuItem("Open Scene...")) {}
-            if (ImGui::MenuItem("Save Scene")) {}
+            if (ImGui::MenuItem("New Scene")) {
+                m_sceneManager->DestroyScene();
+                m_sceneManager->CreateScene();
+            }
+            if (ImGui::MenuItem("Open Scene...")) {
+                // TODO: Implement scene loading.
+            }
+            if (ImGui::MenuItem("Save Scene")) {
+                // TODO: Implement scene saving logic.
+            }
 
             ImGui::Separator();
 
             if (ImGui::MenuItem("Exit")) {
                 glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
             }
+
             ImGui::EndMenu();
         }
 
         if (ImGui::BeginMenu("Edit"))
         {
-            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-            if (ImGui::MenuItem("Redo", "CTRL+Y")) {}
+            if (ImGui::MenuItem("Undo", "CTRL+Z")) {
+                // TODO: Implement an action buffer for undo
+            }
+            if (ImGui::MenuItem("Redo", "CTRL+Y")) {
+                // TODO: Implement an action buffer for redo
+            }
+
             ImGui::EndMenu();
         }
 
@@ -297,19 +393,33 @@ void Editor::RenderMenuBar(Scene* scene)
         {
             if (ImGui::MenuItem("Empty GameObject")) {
                 
-                scene->AddGameObject(new GameObject("NewGameObject"));
+                GameObject* gameObject = new GameObject("NewGameObject");
+                gameObject->SetName(gameObject->GetName() + '_' + std::to_string(gameObject->GetID()));
+                scene->AddGameObject(gameObject);
+
             }
 
             ImGui::Separator();
 
             if (ImGui::MenuItem("Cube")) {
                 GameObject* gameObject = new GameObject("NewCube");
+                gameObject->SetName(gameObject->GetName() + '_' + std::to_string(gameObject->GetID()));
                 gameObject->AddComponent<MeshComponent>(new Mesh(MeshType::Cube));
                 scene->AddGameObject(gameObject);
             }
             if (ImGui::MenuItem("Plane")) {
                 GameObject* gameObject = new GameObject("NewPlane");
+                gameObject->SetName(gameObject->GetName() + '_' + std::to_string(gameObject->GetID()));
                 gameObject->AddComponent<MeshComponent>(new Mesh(MeshType::Plane));
+                scene->AddGameObject(gameObject);
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Point Light"))
+            {
+                GameObject* gameObject = new GameObject("NewPointLight");
+                gameObject->AddComponent<LightComponent>();
                 scene->AddGameObject(gameObject);
             }
 
@@ -317,5 +427,175 @@ void Editor::RenderMenuBar(Scene* scene)
         }
 
         ImGui::EndMenuBar();
+    }
+}
+
+void Editor::RenderAssetsPanel()
+{
+    ImGui::Begin("Assets");
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+
+    bool canGoUp = m_currentPath != m_rootPath;
+    if (!canGoUp)
+        ImGui::BeginDisabled();
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+    if (ImGui::Button(ICON_LC_ARROW_LEFT))
+    {
+        std::filesystem::path currentPath(m_currentPath);
+        if (currentPath.has_parent_path())
+        {
+            std::string parentPath = currentPath.parent_path().string();
+
+            if (parentPath.find(m_rootPath) == 0) {
+                m_currentPath = parentPath;
+                UpdateDirectoryContents();
+            }
+        }
+    }
+
+    ImGui::PopStyleColor();
+
+    if (!canGoUp)
+        ImGui::EndDisabled();
+    
+    ImGui::SameLine();
+
+    std::string displayPath = m_currentPath;
+
+    ImGui::Text("%s", displayPath.c_str());
+
+    ImGui::PopStyleVar();
+    ImGui::Separator();
+
+    float cellPadding = 10.0f;
+    float iconSize = 50.0f;
+    float cellSize = iconSize + cellPadding * 2;
+    float panelWidth = ImGui::GetContentRegionAvail().x;
+    int columnsCount = static_cast<int>(panelWidth / cellSize);
+    if (columnsCount < 1) columnsCount = 1;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(cellPadding, cellPadding));
+
+    ImGui::Columns(columnsCount, nullptr, false);
+
+    for (size_t i = 0; i < m_currentDirectoryContents.size(); i++)
+    {
+        const auto& entry = m_currentDirectoryContents[i];
+        ImGui::BeginGroup();
+
+        ImGui::PushID(static_cast<int>(i));
+        bool isSelected = false;
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+        if (entry.isDirectory)
+        {
+            if (ImGui::Button(ICON_LC_FOLDER, ImVec2(iconSize, iconSize)))
+            {
+                m_currentPath = entry.fullPath;
+                UpdateDirectoryContents();
+            }
+        }
+        else
+        {
+            std::string ext = std::filesystem::path(entry.name).extension().string();
+            const char* icon = ICON_LC_FILE; // Default
+
+            if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
+                icon = ICON_LC_IMAGE;
+            else if (ext == ".obj" || ext == ".fbx" || ext == ".gltf")
+                icon = ICON_LC_BOX;
+            else if (ext == ".wav" || ext == ".mp3")
+                icon = ICON_LC_FILE_MUSIC;
+            else if (ext == ".h" || ext == ".hpp")
+                icon = ICON_LC_LIBRARY_BIG;
+            else if (ext == ".c" || ext == ".cpp")
+                icon = ICON_LC_FILE_CODE;
+
+            if (ImGui::Button(icon, ImVec2(iconSize, iconSize)))
+            {
+                isSelected = true;
+            }
+        }
+        
+        ImGui::PopStyleColor();
+
+        ImVec2 labelSize = ImGui::CalcTextSize(entry.name.c_str());
+        float labelWidth = cellSize - cellPadding * 2;
+
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX());
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + labelWidth);
+
+        if (labelSize.x > labelWidth)
+        {
+            if (!isSelected)
+            {
+                if (entry.name.size() > 14)
+                {
+                    std::string truncated = entry.name.substr(0, 14) + "...";
+                    ImGui::TextWrapped("%s", truncated.c_str());
+                } else {
+                    ImGui::TextWrapped("%s", entry.name.c_str());
+                }
+            } else {
+                ImGui::TextWrapped("%s", entry.name.c_str());
+                // TODO: it resets after release, fix later
+            }
+            
+
+        }
+        else
+        {
+            ImGui::TextWrapped("%s", entry.name.c_str());
+        }
+
+        ImGui::PopTextWrapPos();
+
+        ImGui::EndGroup();
+        ImGui::NextColumn();
+        ImGui::PopID();
+    }
+
+    ImGui::Columns(1);
+    ImGui::PopStyleVar();
+    ImGui::End();
+}
+
+void Editor::UpdateDirectoryContents()
+{
+    m_currentDirectoryContents.clear();
+
+    try
+    {
+        for (const auto& entry : std::filesystem::directory_iterator(m_currentPath))
+        {
+            if (entry.path().filename().string()[0] == '.')
+                continue;
+            FileEntry fileEntry;
+            fileEntry.name = entry.path().filename().string();
+            fileEntry.isDirectory = entry.is_directory();
+            fileEntry.fullPath = entry.path().string();
+            m_currentDirectoryContents.push_back(fileEntry);
+        }
+
+        // Sorting
+        std::sort(m_currentDirectoryContents.begin(), m_currentDirectoryContents.end(),
+            [](const FileEntry& a, const FileEntry& b)
+            {
+                if (a.isDirectory != b.isDirectory)
+                {
+                    return a.isDirectory > b.isDirectory;
+                }
+                return a.name < b.name;
+            }
+        );
+    }
+    catch(const std::filesystem::filesystem_error& e)
+    {
+        // TODO: Handle the errors
+        std::cerr << "Error accessing directory: " << e.what() << std::endl;
     }
 }

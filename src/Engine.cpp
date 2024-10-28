@@ -22,7 +22,7 @@ bool Engine::Initialize()
 	}
 
 	m_editor = new Editor();
-	if (!m_editor->Initialize(m_renderer->GetWindow()))
+	if (!m_editor->Initialize(m_renderer->GetWindow(), m_sceneManager))
 	{
 		std::cerr << "editor\n";
 		return false;

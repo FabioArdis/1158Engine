@@ -26,7 +26,7 @@ public:
 	 * 
      * @param name The name of the game object.
      */
-	GameObject(std::string name) : transformComponent(new TransformComponent(this)), m_name(name)
+	GameObject(std::string name) : m_id(nextID++), transformComponent(new TransformComponent(this)), m_name(name)
 	{
 		m_components.push_back(transformComponent);
 	}
@@ -150,9 +150,12 @@ public:
 		m_name = name;
 	}
 
+	unsigned int GetID() const { return m_id; }
+
 private:
     std::string m_name;           			/**The name of the game object. */
     TransformComponent* transformComponent; /**Pointer to the TransformComponent associated with the game object. */
     std::vector<Component*> m_components; 	/**List of components attached to the game object. */
+	unsigned int m_id;
+	static unsigned int nextID;
 };
-
