@@ -262,8 +262,8 @@ void Editor::RenderSceneHierarchy(Scene *scene)
             flags |= ImGuiTreeNodeFlags_Selected;
         }
 
-        bool opened = ImGui::TreeNodeEx((object->GetName()).c_str(), flags);
-
+        bool opened = ImGui::TreeNodeEx((object->GetName() + "##" + std::to_string(object->GetID())).c_str(), flags);
+        // ## hides the id 
         std::string popupId = "item context menu" + std::to_string(object->GetID());
         
         if (ImGui::IsItemClicked(0) || ImGui::IsItemClicked(1))
@@ -400,8 +400,7 @@ void Editor::RenderMenuBar(Scene* scene)
         {
             if (ImGui::MenuItem("Empty GameObject")) {
                 
-                GameObject* gameObject = new GameObject("NewGameObject");
-                gameObject->SetName(gameObject->GetName() + '_' + std::to_string(gameObject->GetID()));
+                GameObject* gameObject = new GameObject(scene->GenerateUniqueName("EmptyGameObjects"));
                 scene->AddGameObject(gameObject);
 
             }
@@ -409,14 +408,12 @@ void Editor::RenderMenuBar(Scene* scene)
             ImGui::Separator();
 
             if (ImGui::MenuItem("Cube")) {
-                GameObject* gameObject = new GameObject("NewCube");
-                gameObject->SetName(gameObject->GetName() + '_' + std::to_string(gameObject->GetID()));
+                GameObject* gameObject = new GameObject(scene->GenerateUniqueName("Cube"));
                 gameObject->AddComponent<MeshComponent>(new Mesh(MeshType::Cube));
                 scene->AddGameObject(gameObject);
             }
             if (ImGui::MenuItem("Plane")) {
-                GameObject* gameObject = new GameObject("NewPlane");
-                gameObject->SetName(gameObject->GetName() + '_' + std::to_string(gameObject->GetID()));
+                GameObject* gameObject = new GameObject(scene->GenerateUniqueName("Plane"));
                 gameObject->AddComponent<MeshComponent>(new Mesh(MeshType::Plane));
                 scene->AddGameObject(gameObject);
             }
@@ -425,7 +422,7 @@ void Editor::RenderMenuBar(Scene* scene)
 
             if (ImGui::MenuItem("Point Light"))
             {
-                GameObject* gameObject = new GameObject("NewPointLight");
+                GameObject* gameObject = new GameObject(scene->GenerateUniqueName("PointLight"));
                 gameObject->AddComponent<LightComponent>();
                 scene->AddGameObject(gameObject);
             }

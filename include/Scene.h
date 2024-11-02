@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <unordered_set>
 #include "GameObject.h"
 
 /**
@@ -40,6 +41,24 @@ public:
 		}
 	}
 
+	bool IsNameTaken(const std::string& name) const
+	{
+		return m_objectsNames.find(name) != m_objectsNames.end();
+	}
+
+	std::string GenerateUniqueName(const std::string& name)
+	{
+		std::string uniqueName = name;
+		int counter = 1;
+
+		while (IsNameTaken(uniqueName))
+		{
+			uniqueName = name + std::to_string(counter++);
+		}
+
+		return uniqueName;
+	}
+
 	/**
 	 * @brief Gets the list of GameObjects in the scene.
 	 * 
@@ -58,6 +77,7 @@ public:
 	void AddGameObject(GameObject* gameObject)
 	{
 		m_gameObjects.push_back(gameObject);
+		m_objectsNames.insert(gameObject->GetName());
 	}
 
 	/**
@@ -67,7 +87,13 @@ public:
 	 */
 	void RemoveGameObject(GameObject* gameObject)
 	{
-		m_gameObjects.erase(std::remove(m_gameObjects.begin(), m_gameObjects.end(),gameObject), m_gameObjects.end());
+		auto it = std::find(m_gameObjects.begin(), m_gameObjects.end(), gameObject);
+
+		if (it != m_gameObjects.end())
+		{
+			m_objectsNames.erase((*it)->GetName());
+			m_gameObjects.erase(it);
+		}
 	}
 
 	/**
@@ -102,4 +128,5 @@ public:
 private:
 	std::string m_name; 					/**The name of the scene. */
 	std::vector<GameObject*> m_gameObjects; /**Vector containing pointers to GameObjects in the scene. */
+	std::unordered_set<std::string> m_objectsNames; // Since i'm just doing name checking, i have chosen to go with hashing. Much faster with a little memory overhead.
 };
