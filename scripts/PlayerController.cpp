@@ -6,12 +6,12 @@ public:
     void OnUpdate(float deltaTime) override
     {
         auto transform = GetComponent<TransformComponent>();
-        if (transform->GetPosition().z >= 10.0f)
+        if (transform->GetPosition().z >= maxRange)
         {
             isIncreasing = false;
 
         }            
-        else if (transform->GetPosition().z <= -10.0f)
+        else if (transform->GetPosition().z <= minRange)
         {
             isIncreasing = true;
         }
@@ -28,7 +28,9 @@ public:
         {
             {"Speed", PropertyType::Float},
             {"Health", PropertyType::Float},
-            {"Stuff", PropertyType::Float},
+            //{"Stuff", PropertyType::Float},
+            {"minRange", PropertyType::Float},
+            {"maxRange", PropertyType::Float},
             {"isIncreasing", PropertyType::Bool},
         };
     }
@@ -39,6 +41,8 @@ public:
         if (name == "Health") return &m_Health;
         if (name == "Stuff") return &m_stuff;
         if (name == "isIncreasing") return &isIncreasing;
+        if (name == "minRange") return &minRange;
+        if (name == "maxRange") return &maxRange;
 
         return nullptr;
     }
@@ -47,6 +51,9 @@ private:
     float m_Speed = 0.1f;
     float m_Health = 100.0f;
     float m_stuff = 100.0f;
+
+    float maxRange = 10.0f;
+    float minRange = -10.0f;
 
     bool isIncreasing = true;
 };

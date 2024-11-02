@@ -14,3 +14,8 @@ Mesh* MeshComponent::GetMesh()
 {
 	return m_mesh;
 }
+
+MeshType MeshComponent::GetMeshType() const
+{
+    return m_mesh->GetType();
+}

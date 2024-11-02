@@ -300,6 +300,8 @@ void Editor::RenderPropertiesPanel()
 
     if (m_selectedObject)
     {
+        std::string popupId = "add component menu" + std::to_string(m_selectedObject->GetID());
+
         ImGui::Text("Selected: %s", m_selectedObject->GetName().c_str());
 
         if (auto transform = m_selectedObject->GetComponent<TransformComponent>())
@@ -329,7 +331,30 @@ void Editor::RenderPropertiesPanel()
         {
             if (ImGui::CollapsingHeader("Mesh Component"))
             {
-                ImGui::Text("Mesh Component");
+                MeshType currentMeshType = mesh->GetMeshType();
+                const char* currentMeshName = MeshTypeNames[static_cast<int>(currentMeshType)].data();
+                //ImGui::Text("Mesh Component");
+                if (ImGui::BeginCombo("Mesh", currentMeshName))
+                {
+                    for (int i = 0; i < static_cast<int>(MeshType::Count) - 1; ++i)
+                    {
+                        MeshType meshType = static_cast<MeshType>(i);
+                        bool isSelected = (meshType == currentMeshType);
+
+                        if (ImGui::Selectable(MeshTypeNames[i].data(), isSelected))
+                        {
+                            mesh->ClearMesh();
+                            mesh->SetMesh(new Mesh(meshType));
+                        }
+
+                        if (isSelected)
+                        {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+
+                    ImGui::EndCombo();
+                }
             }
         }
 
@@ -384,6 +409,24 @@ void Editor::RenderPropertiesPanel()
                 }
             }
         }
+
+        if (ImGui::Button("Add Component"))
+        {
+            ImGui::OpenPopup(popupId.c_str());
+        }
+
+        if (ImGui::BeginPopup(popupId.c_str()))
+        {
+            if (ImGui::MenuItem("LightComponent"))
+            {
+                m_selectedObject->AddComponent<LightComponent>();
+            }
+            if (ImGui::MenuItem("MeshComponent"))
+            {
+                m_selectedObject->AddComponent<MeshComponent>(new Mesh(MeshType::Cube));
+            }
+            ImGui::EndPopup();
+        }
     }
 
     ImGui::End();
@@ -429,23 +472,32 @@ void Editor::RenderMenuBar(Scene* scene)
 
         if (ImGui::BeginMenu("Add"))
         {
-            if (ImGui::MenuItem("Empty GameObject")) {
+            if (ImGui::MenuItem("Empty GameObject"))
+            {
                 
-                GameObject* gameObject = new GameObject(scene->GenerateUniqueName("EmptyGameObjects"));
+                GameObject* gameObject = new GameObject(scene->GenerateUniqueName("EmptyGameObject"));
                 scene->AddGameObject(gameObject);
 
             }
 
             ImGui::Separator();
 
-            if (ImGui::MenuItem("Cube")) {
+            if (ImGui::MenuItem("Cube"))
+            {
                 GameObject* gameObject = new GameObject(scene->GenerateUniqueName("Cube"));
                 gameObject->AddComponent<MeshComponent>(new Mesh(MeshType::Cube));
                 scene->AddGameObject(gameObject);
             }
-            if (ImGui::MenuItem("Plane")) {
+            if (ImGui::MenuItem("Plane"))
+            {
                 GameObject* gameObject = new GameObject(scene->GenerateUniqueName("Plane"));
                 gameObject->AddComponent<MeshComponent>(new Mesh(MeshType::Plane));
+                scene->AddGameObject(gameObject);
+            }
+            if (ImGui::MenuItem("Capsule"))
+            {
+                GameObject* gameObject = new GameObject(scene->GenerateUniqueName("Capsule"));
+                gameObject->AddComponent<MeshComponent>(new Mesh(MeshType::Capsule));
                 scene->AddGameObject(gameObject);
             }
 

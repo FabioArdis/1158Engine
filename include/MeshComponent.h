@@ -76,6 +76,10 @@ public:
 	*/
 	Mesh* GetMesh();
 
+	MeshType GetMeshType() const;
+
 private:
-    Mesh* m_mesh; /**Pointer to the mesh associated with this component. */};
+    Mesh* m_mesh; /**Pointer to the mesh associated with this component. */
+};
+
 

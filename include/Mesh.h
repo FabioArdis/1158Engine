@@ -1,11 +1,17 @@
 #pragma once
 #include <glad/glad.h>
 #include <vector>
+#include <string_view>
 
 enum class MeshType {
 	Cube,
-	Plane
+	Plane,
+	Capsule,
+	Custom,
+	Count
 };
+
+constexpr std::string_view MeshTypeNames[] = { "Cube", "Plane", "Capsule", "Custom" };
 
 /**
  * @class Mesh
@@ -53,6 +59,8 @@ public:
 	*/
 	void CreatePlane();
 
+	void CreateCapsule(float radius, float height, int segments, int rings);
+
 	/**
 	* @brief Renders the mesh.
 	* 
@@ -82,10 +90,15 @@ public:
 	*/
 	unsigned int GetIndexCount() const { return static_cast<unsigned int>(m_indices.size()); }
 
+	MeshType GetType() const;
+
 private:
     unsigned int m_VAO; 					/**Vertex Array Object identifier. */
     unsigned int m_VBO;						/**Vertex Buffer Object identifier. */
     unsigned int m_EBO; 					/**Element Buffer Object identifier. */
     std::vector<float> m_vertices; 			/**Array of vertex data (positions, normals, etc.). */
-    std::vector<unsigned int> m_indices; 	/**Array of indices for indexed drawing. */};
+    std::vector<unsigned int> m_indices; 	/**Array of indices for indexed drawing. */
+	
+	MeshType m_meshType;
+};
 

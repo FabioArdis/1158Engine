@@ -1,9 +1,10 @@
 #include "Mesh.h"
+#include <math.h>
 // #include <iostream> // Unused, can be removed
 
 Mesh::Mesh() : m_VAO(0), m_VBO(0), m_EBO(0)
 {
-
+	m_meshType = MeshType::Custom;
 }
 
 Mesh::~Mesh()
@@ -16,11 +17,20 @@ Mesh::~Mesh()
 
 Mesh::Mesh(MeshType type) : m_VAO(0), m_VBO(0), m_EBO(0) // Delegating constructor
 {
-	if (type == MeshType::Cube) {
+	if (type == MeshType::Cube)
+	{
 		CreateCube();
+		m_meshType = MeshType::Cube;
 	}
-	else if (type == MeshType::Plane) {
+	else if (type == MeshType::Plane)
+	{
 		CreatePlane();
+		m_meshType = MeshType::Plane;
+	}
+	else if (type == MeshType::Capsule)
+	{
+		CreateCapsule(0.5f, 2.0f, 32, 16);
+		m_meshType = MeshType::Capsule;
 	}
 }
 
@@ -145,6 +155,160 @@ void Mesh::CreatePlane()
 	glBindVertexArray(0);
 }
 
+void Mesh::CreateCapsule(float radius, float height, int segments, int rings)
+{
+	m_vertices.clear();
+    m_indices.clear();
+
+    const float PI = 3.14159265359f;
+    const int verticalSegments = segments;
+    const int horizontalSegments = rings;
+    const float halfHeight = height * 0.5f;
+
+    for (int ring = 0; ring <= horizontalSegments / 2; ++ring)
+	{
+        float phi = PI * float(ring) / float(horizontalSegments);
+        for (int segment = 0; segment <= verticalSegments; ++segment)
+		{
+            float theta = 2.0f * PI * float(segment) / float(verticalSegments);
+
+            float x = radius * sin(phi) * cos(theta);
+            float y = radius * cos(phi) + halfHeight;
+            float z = radius * sin(phi) * sin(theta);
+
+            float nx = sin(phi) * cos(theta);
+            float ny = cos(phi);
+            float nz = sin(phi) * sin(theta);
+
+            m_vertices.push_back(x);
+            m_vertices.push_back(y);
+            m_vertices.push_back(z);
+            m_vertices.push_back(nx);
+            m_vertices.push_back(ny);
+            m_vertices.push_back(nz);
+        }
+    }
+
+    for (int ring = 0; ring <= 1; ++ring)
+	{
+        float y = halfHeight - ring * height;
+        for (int segment = 0; segment <= verticalSegments; ++segment)
+		{
+            float theta = 2.0f * PI * float(segment) / float(verticalSegments);
+
+            float x = radius * cos(theta);
+            float z = radius * sin(theta);
+
+            float nx = cos(theta);
+            float ny = 0.0f;
+            float nz = sin(theta);
+
+            m_vertices.push_back(x);
+            m_vertices.push_back(y);
+            m_vertices.push_back(z);
+            m_vertices.push_back(nx);
+            m_vertices.push_back(ny);
+            m_vertices.push_back(nz);
+        }
+    }
+
+    for (int ring = horizontalSegments / 2; ring <= horizontalSegments; ++ring) 
+	{
+        float phi = PI * float(ring) / float(horizontalSegments);
+        for (int segment = 0; segment <= verticalSegments; ++segment) 
+		{
+            float theta = 2.0f * PI * float(segment) / float(verticalSegments);
+
+            float x = radius * sin(phi) * cos(theta);
+            float y = radius * cos(phi) - halfHeight;
+            float z = radius * sin(phi) * sin(theta);
+
+            float nx = sin(phi) * cos(theta);
+            float ny = cos(phi);
+            float nz = sin(phi) * sin(theta);
+
+            m_vertices.push_back(x);
+            m_vertices.push_back(y);
+            m_vertices.push_back(z);
+            m_vertices.push_back(nx);
+            m_vertices.push_back(ny);
+            m_vertices.push_back(nz);
+        }
+    }
+
+    int topOffset = 0;
+    for (int ring = 0; ring < horizontalSegments / 2; ++ring) 
+	{
+        for (int segment = 0; segment < verticalSegments; ++segment) 
+		{
+            int current = ring * (verticalSegments + 1) + segment;
+            int next = current + (verticalSegments + 1);
+
+            m_indices.push_back(topOffset + current);
+            m_indices.push_back(topOffset + next);
+            m_indices.push_back(topOffset + current + 1);
+
+            m_indices.push_back(topOffset + current + 1);
+            m_indices.push_back(topOffset + next);
+            m_indices.push_back(topOffset + next + 1);
+        }
+    }
+
+    int cylinderOffset = (horizontalSegments / 2 + 1) * (verticalSegments + 1);
+    for (int segment = 0; segment < verticalSegments; ++segment) 
+	{
+        int current = segment;
+        int next = current + (verticalSegments + 1);
+
+        m_indices.push_back(cylinderOffset + current);
+        m_indices.push_back(cylinderOffset + next);
+        m_indices.push_back(cylinderOffset + current + 1);
+
+        m_indices.push_back(cylinderOffset + current + 1);
+        m_indices.push_back(cylinderOffset + next);
+        m_indices.push_back(cylinderOffset + next + 1);
+    }
+
+    int bottomOffset = cylinderOffset + 2 * (verticalSegments + 1);
+    for (int ring = 0; ring < horizontalSegments / 2; ++ring)
+	{
+        for (int segment = 0; segment < verticalSegments; ++segment)
+		{
+            int current = ring * (verticalSegments + 1) + segment;
+            int next = current + (verticalSegments + 1);
+
+            m_indices.push_back(bottomOffset + current);
+            m_indices.push_back(bottomOffset + next);
+            m_indices.push_back(bottomOffset + current + 1);
+
+            m_indices.push_back(bottomOffset + current + 1);
+            m_indices.push_back(bottomOffset + next);
+            m_indices.push_back(bottomOffset + next + 1);
+        }
+    }
+
+    glGenVertexArrays(1, &m_VAO);
+    glGenBuffers(1, &m_VBO);
+    glGenBuffers(1, &m_EBO);
+
+    glBindVertexArray(m_VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int), m_indices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
 void Mesh::Draw()
 {
 	// Bind VAO and draw the mesh
@@ -174,4 +338,9 @@ void Mesh::Clear()
 	// Clear vertex and index data
 	m_vertices.clear();
 	m_indices.clear();
+}
+
+MeshType Mesh::GetType() const
+{
+    return m_meshType;
 }

@@ -7,7 +7,7 @@ struct Light {
 	float intensity;	// Light intensity
 };
 
-#define MAX_LIGHTS 4				// Maximum number of lights allowed
+#define MAX_LIGHTS 16				// Maximum number of lights allowed
 uniform Light lights[MAX_LIGHTS];	// Array of lights
 uniform vec3 viewPos;				// Camera position
 
