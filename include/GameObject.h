@@ -5,6 +5,7 @@
 #include "Component.h"
 #include "TransformComponent.h"
 #include "LightComponent.h"
+#include "ScriptComponent.h"
 
 /**
  * @class GameObject

@@ -155,7 +155,7 @@ void Renderer::RenderObject(GameObject* object)
 
 			if (mesh)
 			{
-				SetLights(m_lights);
+				//SetLights(m_lights); unused, we are using the new system.
 				mesh->Draw();
 			}
 		}
@@ -209,6 +209,8 @@ void Renderer::Render(Scene* scene)
 		m_shaderManager->SetMatrix4("projection", projection);
 		m_shaderManager->SetMatrix4("model", model);
 
+		UpdateLights(scene);
+
 		for (auto& object : scene->GetGameObjects())
 		{
 			RenderObject(object);
@@ -251,5 +253,36 @@ void Renderer::CalculateFPS() {
 		m_fps = static_cast<double>(m_nbFrames) / m_frameTime;
 		m_nbFrames = 0;
 		m_lastTime = currentTime;
+	}
+}
+
+void Renderer::UpdateLights(Scene *scene)
+{
+	const unsigned int MAX_LIGHTS = m_shaderManager->GetUniformLocation("MAX_LIGHTS");
+	std::vector<LightComponent*> sceneLights;
+
+	for (auto& gameObject : scene->GetGameObjects())
+	{
+		if (auto lightComp = gameObject->GetComponent<LightComponent>())
+		{
+			sceneLights.push_back(lightComp);
+		}
+	}
+
+	m_shaderManager->UseShader("default");
+
+	int numLights = std::min(static_cast<unsigned int>(sceneLights.size()), MAX_LIGHTS);
+
+	m_shaderManager->SetInt("numLights", numLights);
+
+
+	for (int i = 0; i < numLights; ++i)
+	{
+		std::string uniformName = "lights[" + std::to_string(i) + "]";
+		auto light = sceneLights[i];
+
+        m_shaderManager->SetVector3((uniformName + ".position").c_str(), light->GetPosition());
+        m_shaderManager->SetVector3((uniformName + ".color").c_str(), light->GetColor());
+        m_shaderManager->SetFloat((uniformName + ".intensity").c_str(), light->GetIntensity());		
 	}
 }

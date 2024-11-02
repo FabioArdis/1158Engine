@@ -81,6 +81,8 @@ public:
 
 	GLFWwindow* GetWindow() const { return m_window; }
 
+	void UpdateLights(Scene* scene);
+
 private:
     GLFWwindow* m_window; 					/**Pointer to the GLFW window. */
     Shader* m_shader; 						/**Pointer to the active shader. */

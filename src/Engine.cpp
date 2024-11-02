@@ -35,6 +35,9 @@ bool Engine::Initialize()
 	// Add cube object to the scene
 	GameObject* cube = new GameObject("Cube");
 	cube->GetComponent<TransformComponent>()->SetPosition(glm::vec3(2.5f, 0.0f, 5.0f));
+	auto scriptComponent = cube->AddComponent<ScriptComponent>();
+	scriptComponent->LoadScript("PlayerController");
+	//This is, of course, just for the demo scene. Will need to implement a way to scan the scripts in the assets and use a selector.
 	cube->AddComponent<MeshComponent>();
 	m_sceneManager->AddObjectToCurrentScene(cube);
 

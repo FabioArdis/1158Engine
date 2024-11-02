@@ -12,6 +12,7 @@
 #include "imgui_impl_opengl3.h"
 #include "IconsLucide.h"
 #include "MeshComponent.h"
+#include "ScriptBase.h"
 #ifdef _WIN32
     #include <windows.h>
 #elif defined(__linux__)
@@ -281,6 +282,7 @@ void Editor::RenderSceneHierarchy(Scene *scene)
             if (ImGui::MenuItem("Delete"))
             {
                 scene->RemoveGameObject(object);
+                m_selectedObject = nullptr;
             }
             ImGui::EndPopup();
         }
@@ -350,6 +352,35 @@ void Editor::RenderPropertiesPanel()
                 if (ImGui::DragFloat("Range", &range, 0.1f))
                 {
                     light->SetRange(range);
+                }
+            }
+        }
+
+        if (auto script = m_selectedObject->GetComponent<ScriptComponent>())
+        {
+            std::string headerName = "Script Component (" + script->GetName() +")";
+            if (ImGui::CollapsingHeader(headerName.c_str()))
+            {
+                auto instance = script->GetScriptInstance();
+
+                for (const auto& [name, type] : instance->GetProperties())
+                {
+                    void* ptr = instance->GetPropertyPtr(name);
+
+                    switch (type)
+                    {
+                        case PropertyType::Float:
+                            ImGui::DragFloat(name.c_str(), (float*)ptr, 0.1f);
+                            break;
+                        case PropertyType::Bool:
+                            ImGui::Checkbox(name.c_str(), (bool*)ptr);
+                        // I need to implement the next types as well
+                    }
+                }
+
+                if (ImGui::Button("Reload Script"))
+                {
+                    script->ReloadIfNeeded();
                 }
             }
         }

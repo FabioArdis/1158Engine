@@ -11,6 +11,8 @@ struct Light {
 uniform Light lights[MAX_LIGHTS];	// Array of lights
 uniform vec3 viewPos;				// Camera position
 
+uniform int numLights; // Actual number of lights
+
 in vec3 FragPos;	// Fragment position in world space
 in vec3 Normal;		// Normal vector at the fragment
 
@@ -18,21 +20,29 @@ out vec4 FragColor;	// Final color output of the fragment
 
 void main()
 {
-	vec3 ambient = vec3(0.1);	// Basic ambient light contribution
+    vec3 ambient = vec3(0.1);
+    vec3 result = ambient;
 
-	vec3 result = ambient;		// Initialize result with ambient light
-
-	// Loop through each light and compute its contribution
-	for (int i = 0; i < MAX_LIGHTS; i++)
-	{
-		vec3 lightDir = normalize(lights[i].position - FragPos);		// Direction to the light
-		float diff = max(dot(Normal, lightDir), 0.0);					// Diffuse intensity based on angle
-		vec3 diffuse = lights[i].color * diff * lights[i].intensity;	// Calculate diffuse contribution
-
-		result += diffuse;	// Add diffuse contribution to result
-	}
-
-	FragColor = vec4(result, 1.0);			// Set the final fragment color
-	//FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Debug: Red color
-
+    int lightsToProcess = min(numLights, MAX_LIGHTS);
+    for (int i = 0; i < lightsToProcess; i++)
+    {
+        // Calculate distance to light
+        vec3 lightDir = lights[i].position - FragPos;
+        float distance = length(lightDir);
+        lightDir = normalize(lightDir);
+        
+        // Calculate attenuation
+        float constant = 1.0;
+        float linear = 0.09;
+        float quadratic = 0.032;
+        float attenuation = 1.0 / (constant + linear * distance + quadratic * distance * distance);
+        
+        // Calculate diffuse lighting
+        float diff = max(dot(Normal, lightDir), 0.0);
+        vec3 diffuse = lights[i].color * diff * lights[i].intensity * attenuation;
+        
+        result += diffuse;
+    }
+    
+    FragColor = vec4(result, 1.0);
 }
