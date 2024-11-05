@@ -6,6 +6,12 @@ public:
     void OnUpdate(float deltaTime) override
     {
         auto transform = GetComponent<TransformComponent>();
+
+        if (!transform)
+        {
+            std::cerr << "TransformComponent is not available!" << std::endl;
+            return;
+        }
         if (transform->GetPosition().z >= maxRange)
         {
             isIncreasing = false;
@@ -28,7 +34,7 @@ public:
         {
             {"Speed", PropertyType::Float},
             {"Health", PropertyType::Float},
-            //{"Stuff", PropertyType::Float},
+            {"Stuff", PropertyType::Float},
             {"minRange", PropertyType::Float},
             {"maxRange", PropertyType::Float},
             {"isIncreasing", PropertyType::Bool},

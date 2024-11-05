@@ -1,17 +1,14 @@
 #pragma once
 #include <glad/glad.h>
-#include <vector>
+#include <array>
+#include <cstdint>
 #include <string_view>
+#include <vector>
 
-enum class MeshType {
-	Cube,
-	Plane,
-	Capsule,
-	Custom,
-	Count
-};
+enum class MeshType : std::uint8_t { Cube, Plane, Capsule, Custom, Count };
 
-constexpr std::string_view MeshTypeNames[] = { "Cube", "Plane", "Capsule", "Custom" };
+constexpr std::array<std::string_view, 4> MeshTypeNames = {"Cube", "Plane",
+                                                           "Capsule", "Custom"};
 
 /**
  * @class Mesh
@@ -21,84 +18,87 @@ constexpr std::string_view MeshTypeNames[] = { "Cube", "Plane", "Capsule", "Cust
  * 3D geometries such as cubes and planes. It manages vertex array objects (VAO),
  * vertex buffer objects (VBO), and element buffer objects (EBO).
  */
-class Mesh
-{
-public:
-	/**
+class Mesh {
+ public:
+  /**
 	* @brief Default constructor for the Mesh class.
 	*/
-	Mesh();
+  Mesh();
 
-	/**
+  /**
 	* @brief Destructor for the Mesh class.
 	* 
 	* Cleans up OpenGL resources associated with the mesh.
 	*/
-	~Mesh();
+  ~Mesh();
 
-	/**
+  /**
 	* @brief Constructs a Mesh of the specified type.
 	* 
 	* @param type The type of mesh to create (Cube or Plane).
 	*/
-	Mesh(MeshType type);
+  Mesh(MeshType type);
 
-	/**
+  /**
 	* @brief Creates a cube mesh.
 	* 
 	* This method defines the vertices and indices for a cube and initializes 
 	* the OpenGL buffers accordingly.
 	*/
-	void CreateCube();
+  void CreateCube();
 
-	/**
+  /**
 	* @brief Creates a plane mesh.
 	* 
 	* This method defines the vertices and indices for a plane and initializes 
 	* the OpenGL buffers accordingly.
 	*/
-	void CreatePlane();
+  void CreatePlane();
 
-	void CreateCapsule(float radius, float height, int segments, int rings);
+  void CreateCapsule(float radius, float height, int segments, int rings);
 
-	/**
+  /**
 	* @brief Renders the mesh.
 	* 
 	* Binds the appropriate VAO and draws the mesh using the stored indices.
 	*/
-	void Draw();
+  void Draw();
 
-	/**
+  /**
 	* @brief Clears the mesh data.
 	* 
 	* Deletes the VAO, VBO, and EBO from the GPU and clears the vertex and 
 	* index vectors.
 	*/
-	void Clear();
+  void Clear();
 
-	/**
+  /**
 	* @brief Retrieves the VAO associated with the mesh.
 	* 
 	* @return The VAO identifier.
 	*/
-	unsigned int GetVAO() const { return m_VAO; }
+  [[nodiscard]] unsigned int GetVAO() const { return m_VAO; }
 
-	/**
+  /**
 	* @brief Retrieves the count of indices used in the mesh.
 	* 
 	* @return The number of indices as an unsigned int.
 	*/
-	unsigned int GetIndexCount() const { return static_cast<unsigned int>(m_indices.size()); }
+  [[nodiscard]] unsigned int GetIndexCount() const {
+    return static_cast<unsigned int>(m_indices.size());
+  }
 
-	MeshType GetType() const;
+  [[nodiscard]] MeshType GetType() const;
 
-private:
-    unsigned int m_VAO; 					/**Vertex Array Object identifier. */
-    unsigned int m_VBO;						/**Vertex Buffer Object identifier. */
-    unsigned int m_EBO; 					/**Element Buffer Object identifier. */
-    std::vector<float> m_vertices; 			/**Array of vertex data (positions, normals, etc.). */
-    std::vector<unsigned int> m_indices; 	/**Array of indices for indexed drawing. */
-	
-	MeshType m_meshType;
+ private:
+  unsigned int m_VAO; /**Vertex Array Object identifier. */
+  unsigned int m_VBO; /**Vertex Buffer Object identifier. */
+  unsigned int m_EBO; /**Element Buffer Object identifier. */
+
+  /**Array of vertex data (positions, normals, etc.). */
+  std::vector<float> m_vertices;
+  /**Array of indices for indexed drawing. */
+  std::vector<unsigned int> m_indices;
+
+  MeshType m_meshType;
 };
-

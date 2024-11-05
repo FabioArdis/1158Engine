@@ -1,17 +1,17 @@
+#include <iostream>
+
 #include "Engine.h"
 #include "GameObject.h"
 #include "MeshComponent.h"
 #include "SceneManager.h"
-#include <iostream>
 
-int main()
-{
-	Engine engine;
+int main() {
+  Engine engine;
 
-	if (engine.Initialize())
-		engine.Run();
-	
-	engine.Shutdown();
+  if (engine.Initialize())
+    engine.Run();
 
-	return 0;
+  engine.Shutdown();
+
+  return 0;
 }

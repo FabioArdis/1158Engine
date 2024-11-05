@@ -1,21 +1,17 @@
 #include "MeshComponent.h"
 
-void MeshComponent::SetMesh(Mesh* mesh)
-{
-	m_mesh = mesh;
+void MeshComponent::SetMesh(std::shared_ptr<Mesh> mesh) {
+  m_mesh = mesh;
 }
 
-void MeshComponent::ClearMesh()
-{
-	m_mesh->Clear();
+void MeshComponent::ClearMesh() {
+  m_mesh->Clear();
 }
 
-Mesh* MeshComponent::GetMesh()
-{
-	return m_mesh;
+std::shared_ptr<Mesh> MeshComponent::GetMesh() {
+  return m_mesh;
 }
 
-MeshType MeshComponent::GetMeshType() const
-{
-    return m_mesh->GetType();
+MeshType MeshComponent::GetMeshType() const {
+  return m_mesh->GetType();
 }

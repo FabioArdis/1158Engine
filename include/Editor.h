@@ -13,55 +13,101 @@
 #include <filesystem>
 #include <vector>
 
-class Editor
-{
-public:
-    Editor();
-    ~Editor();
+class Editor {
+ public:
+  Editor();
+  ~Editor();
 
-    bool Initialize(GLFWwindow* window, SceneManager* sceneManager);
-    void Shutdown();
-    void Begin();
-    void End();
-    void Render(Scene* scene);
+  // We most likely won't need to use these constructors.
+  Editor(const Editor&) = delete;
+  Editor& operator=(const Editor&) = delete;
+  Editor(Editor&&) = delete;
+  Editor& operator=(Editor&&) = delete;
 
-    const ImVec2 GetViewPortSize() const { return m_viewportSize; }
-    GLuint GetViewportTexture() const { return m_viewportColorTexture; }
-    GLuint GetFramebuffer() const { return m_framebuffer; }
-    bool IsViewportFocused() const { return m_viewportFocused; }
+  /**
+    * @brief Initializes the editor with the specified window and scene manager.
+    * 
+    * @param window Pointer to the GLFW window.
+    * @param sceneManager Pointer to the SceneManager handling scenes.
+    * @return True if initialization was successful, false otherwise.
+    */
+  bool Initialize(GLFWwindow* window,
+                  std::shared_ptr<SceneManager> sceneManager);
 
-private:
-    struct FileEntry
-    {
-        std::string name;
-        bool isDirectory;
-        std::string fullPath;
-    };
+  /**
+    * @brief Shuts down the editor and releases resources.
+    */
+  void Shutdown();
 
-    std::string m_rootPath;
-    std::string m_currentPath;
-    std::vector<FileEntry> m_currentDirectoryContents;
+  /**
+    * @brief Begins the frame for ImGui rendering.
+    */
+  void Begin();
 
-    void SetupDockspace();
-    void SetupFramebuffer();
-    
-    void UpdateFramebuffer();
+  /**
+    * @brief Ends the frame for ImGui rendering.
+    */
+  static void End();
 
-    void RenderViewport(Scene* scene);
-    void RenderSceneHierarchy(Scene* scene);
-    void RenderPropertiesPanel();
-    void RenderMenuBar(Scene* scene);
-    void RenderAssetsPanel();
+  /**
+    * @brief Renders the editor UI and scene.
+    * 
+    * @param scene Pointer to the current scene to render in the editor.
+    */
+  void Render(std::shared_ptr<Scene> scene);
 
-    void UpdateDirectoryContents();
+  [[nodiscard]] ImVec2 GetViewPortSize() const { return m_viewportSize; }
 
-    GLuint m_framebuffer;
-    GLuint m_viewportColorTexture;
-    GLuint m_depthStencilRBO;
-    ImVec2  m_viewportSize;
-    bool m_viewportFocused;
-    GameObject* m_selectedObject;
-    GameObject* m_renamingObject;
+  [[nodiscard]] GLuint GetViewportTexture() const {
+    return m_viewportColorTexture;
+  }
 
-    SceneManager* m_sceneManager;
+  [[nodiscard]] GLuint GetFramebuffer() const { return m_framebuffer; }
+
+  [[nodiscard]] bool IsViewportFocused() const { return m_viewportFocused; }
+
+ private:
+  struct FileEntry {
+    std::string name;     /** Name of the file or directory. */
+    bool isDirectory;     /** Whether the entry is a directory. */
+    std::string fullPath; /** Full path to the file or directory. */
+  };
+
+  std::string m_rootPath;    /** Root directory path for assets. */
+  std::string m_currentPath; /** Current directory path in the assets panel. */
+  /** Contents of the current directory. */
+  std::vector<FileEntry> m_currentDirectoryContents;
+
+  static void SetupDockspace(); /** Configures ImGui dockspace layout. */
+
+  void SetupFramebuffer(); /** Sets up the framebuffer for the viewport. */
+  /** Updates the framebuffer if the viewport size changes. */
+  void UpdateFramebuffer() const;
+
+  /** Renders the scene in the viewport. */
+  void RenderViewport(std::shared_ptr<Scene> scene);
+  /** Renders the hierarchy of objects in the scene. */
+  void RenderSceneHierarchy(std::shared_ptr<Scene> scene);
+  /** Renders the properties panel for selected objects. */
+  void RenderPropertiesPanel();
+  /** Renders the menu bar for editor options. */
+  void RenderMenuBar(std::shared_ptr<Scene> scene);
+  void RenderAssetsPanel(); /** Renders the assets panel to browse files. */
+
+  /** Updates the contents of the current directory. */
+  void UpdateDirectoryContents();
+
+  GLuint m_framebuffer{0}; /** Framebuffer object for the viewport. */
+  /** Color texture attached to the framebuffer. */
+  GLuint m_viewportColorTexture{0};
+  GLuint m_depthStencilRBO{0}; /** Renderbuffer object for depth and stencil. */
+
+  ImVec2 m_viewportSize; /** Size of the viewport in the editor. */
+  /** Indicates if the viewport is currently focused. */
+  bool m_viewportFocused{false};
+
+  /** Currently selected game object. */
+  std::shared_ptr<GameObject> m_selectedObject{nullptr};
+
+  std::shared_ptr<SceneManager> m_sceneManager{nullptr};
 };
