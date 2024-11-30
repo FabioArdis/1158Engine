@@ -7,7 +7,7 @@
 
 #include "ShaderManager.h"
 
-TextRenderer::TextRenderer(std::shared_ptr<ShaderManager> shaderManager)
+TextRenderer::TextRenderer(const std::shared_ptr<ShaderManager>& shaderManager)
     : m_shaderManager(shaderManager), VAO(0), VBO(0) {}
 
 TextRenderer::~TextRenderer() {
@@ -104,7 +104,7 @@ void TextRenderer::RenderText(const std::string& text, float x, float y,
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(VAO);
 
-  for (std::string::const_iterator c = text.begin(); c != text.end(); c++) {
+  for (std::string::const_iterator c = text.begin(); c != text.end(); ++c) {
     Character ch = Characters[*c];
 
     float xpos = x + ch.Bearing.x * scale;

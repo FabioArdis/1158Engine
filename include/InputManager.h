@@ -18,7 +18,7 @@ public:
 	* 
 	* @param window Pointer to the GLFW window to capture input from.
 	*/
-	InputManager(GLFWwindow* window);
+	explicit InputManager(GLFWwindow* window);
 
 	/**
 	* @brief Polls for input events and updates the key states.

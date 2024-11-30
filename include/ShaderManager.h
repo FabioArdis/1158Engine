@@ -129,7 +129,7 @@ class ShaderManager {
 		 * @param shader The shader or program ID to check.
 		 * @param type The type of shader or program (e.g., "VERTEX", "FRAGMENT", "PROGRAM").
 		 */
-    void checkCompileErrors(unsigned int shader, const std::string& type);
+    static void checkCompileErrors(unsigned int shader, const std::string& type);
   };
 
   /**Map of shader names to Shader objects. */

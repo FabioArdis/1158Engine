@@ -36,7 +36,7 @@ Editor::~Editor() {
 }
 
 bool Editor::Initialize(GLFWwindow* window,
-                        std::shared_ptr<SceneManager> sceneManager) {
+                        const std::shared_ptr<SceneManager>& sceneManager) {
   m_sceneManager = sceneManager;
 
   IMGUI_CHECKVERSION();
@@ -46,7 +46,7 @@ bool Editor::Initialize(GLFWwindow* window,
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
   io.Fonts->AddFontDefault();
-  static const std::array<ImWchar, 3> icons_ranges = {ICON_MIN_LC, ICON_MAX_LC,
+  static constexpr std::array<ImWchar, 3> icons_ranges = {ICON_MIN_LC, ICON_MAX_LC,
                                                       0};
   ImFontConfig icons_config;
   icons_config.MergeMode = true;
@@ -76,10 +76,12 @@ bool Editor::Initialize(GLFWwindow* window,
     UpdateDirectoryContents();
   }
 
+  m_notificationManager = std::make_shared<NotificationManager>();
+
   return true;
 }
 
-void Editor::Shutdown() {
+void Editor::Shutdown() const {
   if (m_framebuffer != 0) {
     glDeleteFramebuffers(1, &m_framebuffer);
     glDeleteTextures(1, &m_viewportColorTexture);
@@ -103,7 +105,7 @@ void Editor::End() {
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Editor::Render(std::shared_ptr<Scene> scene) {
+void Editor::Render(const std::shared_ptr<Scene>& scene) {
   RenderMenuBar(scene);
 
   // ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
@@ -123,6 +125,8 @@ void Editor::Render(std::shared_ptr<Scene> scene) {
   ImGui::SetNextWindowDockID(ImGui::GetID("MyDockSpace"),
                              ImGuiCond_FirstUseEver);
   RenderAssetsPanel();
+
+  m_notificationManager->RenderNotifications();
 
   ImGui::End();
 }
@@ -233,7 +237,7 @@ void Editor::UpdateFramebuffer() const {
                         static_cast<GLsizei>(m_viewportSize.y));
 }
 
-void Editor::RenderViewport(std::shared_ptr<Scene> scene) {
+void Editor::RenderViewport(const std::shared_ptr<Scene>& scene) {
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
   ImGui::Begin("Viewport");
 
@@ -263,13 +267,13 @@ void Editor::RenderViewport(std::shared_ptr<Scene> scene) {
         UpdateFramebuffer();
     } */
 
-  ImGui::Image((ImTextureID)(intptr_t)m_viewportColorTexture, m_viewportSize,
+  ImGui::Image(static_cast<ImTextureID>(static_cast<intptr_t>(m_viewportColorTexture)), m_viewportSize,
                ImVec2(0, 1), ImVec2(1, 0));
   ImGui::End();
   ImGui::PopStyleVar();
 }
 
-void Editor::RenderSceneHierarchy(std::shared_ptr<Scene> scene) {
+void Editor::RenderSceneHierarchy(const std::shared_ptr<Scene>& scene) {
   ImGui::Begin("Scene Hierarchy");
 
   for (auto& object : scene->GetGameObjects()) {
@@ -307,7 +311,7 @@ void Editor::RenderSceneHierarchy(std::shared_ptr<Scene> scene) {
   ImGui::End();
 }
 
-void Editor::RenderPropertiesPanel() {
+void Editor::RenderPropertiesPanel() const {
   ImGui::Begin("Properties");
 
   if (m_selectedObject != nullptr) {
@@ -315,6 +319,8 @@ void Editor::RenderPropertiesPanel() {
         "add component menu" + std::to_string(m_selectedObject->GetID());
 
     ImGui::Text("Selected: %s", m_selectedObject->GetName().c_str());
+
+    std::string errorMessage;
 
     if (auto* transform =
             m_selectedObject->GetComponent<TransformComponent>()) {
@@ -342,7 +348,7 @@ void Editor::RenderPropertiesPanel() {
             MeshTypeNames[static_cast<int>(currentMeshType)].data();
         if (ImGui::BeginCombo("Mesh", currentMeshName)) {
           for (int i = 0; i < static_cast<int>(MeshType::Count) - 1; ++i) {
-            MeshType meshType = static_cast<MeshType>(i);
+            auto meshType = static_cast<MeshType>(i);
             bool isSelected = (meshType == currentMeshType);
 
             if (ImGui::Selectable(MeshTypeNames[i].data(), isSelected)) {
@@ -383,48 +389,56 @@ void Editor::RenderPropertiesPanel() {
       if (ImGui::CollapsingHeader(headerName.c_str())) {
         auto* instance = script->GetScriptInstance();
 
-        for (const auto& [name, type] : instance->GetProperties()) {
-          void* ptr = instance->GetPropertyPtr(name);
+        if (instance) {
+          for (const auto& [name, type] : instance->GetProperties()) {
+            void* ptr = instance->GetPropertyPtr(name);
 
-          switch (type) {
-            case PropertyType::Float:
-              ImGui::DragFloat(name.c_str(), static_cast<float*>(ptr), 0.1f);
+            switch (type) {
+              case PropertyType::Float:
+                ImGui::DragFloat(name.c_str(), static_cast<float*>(ptr), 0.1f);
               break;
-            case PropertyType::Int:
-              ImGui::DragInt(name.c_str(), static_cast<int*>(ptr));
+              case PropertyType::Int:
+                ImGui::DragInt(name.c_str(), static_cast<int*>(ptr));
               break;
-            case PropertyType::Bool:
-              ImGui::Checkbox(name.c_str(), static_cast<bool*>(ptr));
+              case PropertyType::Bool:
+                ImGui::Checkbox(name.c_str(), static_cast<bool*>(ptr));
               break;
-            case PropertyType::Vec2:
-              ImGui::DragFloat2(name.c_str(), &static_cast<glm::vec2*>(ptr)->x);
+              case PropertyType::Vec2:
+                ImGui::DragFloat2(name.c_str(), &static_cast<glm::vec2*>(ptr)->x);
               break;
-            case PropertyType::Vec3:
-              ImGui::DragFloat3(name.c_str(), &static_cast<glm::vec3*>(ptr)->x);
+              case PropertyType::Vec3:
+                ImGui::DragFloat3(name.c_str(), &static_cast<glm::vec3*>(ptr)->x);
               break;
-            case PropertyType::Vec4:
-              ImGui::DragFloat4(name.c_str(), &static_cast<glm::vec4*>(ptr)->x);
+              case PropertyType::Vec4:
+                ImGui::DragFloat4(name.c_str(), &static_cast<glm::vec4*>(ptr)->x);
               break;
-            case PropertyType::String: {
-              auto* str = static_cast<std::string*>(ptr);
-              constexpr size_t bufferSize = 256;
-              std::array<char, bufferSize> buffer = {};
+              case PropertyType::String: {
+                auto* str = static_cast<std::string*>(ptr);
+                constexpr size_t bufferSize = 256;
+                std::array<char, bufferSize> buffer = {};
 
-              std::copy_n(str->begin(),
-                          std::min(str->size(), buffer.size() - 1),
-                          buffer.data());
+                std::copy_n(str->begin(),
+                            std::min(str->size(), buffer.size() - 1),
+                            buffer.data());
 
-              if (ImGui::InputText(name.c_str(), buffer.data(), bufferSize)) {
-                *str = buffer.data();
+                if (ImGui::InputText(name.c_str(), buffer.data(), bufferSize)) {
+                  *str = buffer.data();
+                }
+
+                break;
               }
-
-              break;
             }
           }
+        } else {
+          ImGui::Text(("Script " + script->GetName() + " is not compiled.").c_str());
         }
 
+
         if (ImGui::Button("Reload Script")) {
-          script->ReloadIfNeeded();
+          errorMessage = script->ReloadIfNeeded();
+          if (!errorMessage.empty()) {
+            m_notificationManager->AddNotification("Could not reload: " + errorMessage);
+          }
         }
       }
     }
@@ -448,7 +462,7 @@ void Editor::RenderPropertiesPanel() {
   ImGui::End();
 }
 
-void Editor::RenderMenuBar(std::shared_ptr<Scene> scene) {
+void Editor::RenderMenuBar(const std::shared_ptr<Scene>& scene) {
   if (ImGui::BeginMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       if (ImGui::MenuItem("New Scene")) {

@@ -19,7 +19,7 @@ class LightComponent : public Component {
      * 
      * @param owner Pointer to the GameObject that owns this light component.
      */
-  LightComponent(std::shared_ptr<GameObject> owner);
+  LightComponent(const std::shared_ptr<GameObject>& owner);
 
   /**
      * @brief Updates the light component's state, including its position and direction based on owner's transform.

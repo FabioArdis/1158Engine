@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-ShaderManager::ShaderManager() {}
+ShaderManager::ShaderManager() = default;
 
 ShaderManager::~ShaderManager() {
   m_shaders.clear();
@@ -48,7 +48,7 @@ void ShaderManager::UseShader(const std::string& name) {
 }
 
 void ShaderManager::SetBool(const std::string& name, bool value) {
-  glUniform1i(GetUniformLocation(name), (int)value);
+  glUniform1i(GetUniformLocation(name), static_cast<int>(value));
 }
 
 void ShaderManager::SetInt(const std::string& name, int value) {

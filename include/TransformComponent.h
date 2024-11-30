@@ -20,12 +20,12 @@ class TransformComponent : public Component {
 	 * Initializes position to (0, 0, 0), rotation to (0, 0, 0), and scale to (1, 1, 1).
 	 * @param owner Pointer to the GameObject that owns this component.
 	 */
-  TransformComponent(std::weak_ptr<GameObject> owner)
+  explicit TransformComponent(const std::weak_ptr<GameObject>& owner)
       : Component(owner), m_position(0.0f), m_rotation(0.0f), m_scale(1.0f) {
     std::cerr << "Transform Component is being created.\n";
   }
 
-  ~TransformComponent() {
+  ~TransformComponent() override {
     std::cerr << "Transform Component is being destroyed.\n";
   }
 

@@ -4,6 +4,7 @@
 // Copyright (c) 2014-2024 Omar Cornut
 // License: MIT (included in the LICENSE file)
 
+#include "NotificationManager.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "imgui.h"
@@ -32,17 +33,17 @@ class Editor {
     * @return True if initialization was successful, false otherwise.
     */
   bool Initialize(GLFWwindow* window,
-                  std::shared_ptr<SceneManager> sceneManager);
+                  const std::shared_ptr<SceneManager>& sceneManager);
 
   /**
     * @brief Shuts down the editor and releases resources.
     */
-  void Shutdown();
+  void Shutdown() const;
 
   /**
     * @brief Begins the frame for ImGui rendering.
     */
-  void Begin();
+  static void Begin();
 
   /**
     * @brief Ends the frame for ImGui rendering.
@@ -54,7 +55,7 @@ class Editor {
     * 
     * @param scene Pointer to the current scene to render in the editor.
     */
-  void Render(std::shared_ptr<Scene> scene);
+  void Render(const std::shared_ptr<Scene>& scene);
 
   [[nodiscard]] ImVec2 GetViewPortSize() const { return m_viewportSize; }
 
@@ -85,13 +86,13 @@ class Editor {
   void UpdateFramebuffer() const;
 
   /** Renders the scene in the viewport. */
-  void RenderViewport(std::shared_ptr<Scene> scene);
+  void RenderViewport(const std::shared_ptr<Scene>& scene);
   /** Renders the hierarchy of objects in the scene. */
-  void RenderSceneHierarchy(std::shared_ptr<Scene> scene);
+  void RenderSceneHierarchy(const std::shared_ptr<Scene>& scene);
   /** Renders the properties panel for selected objects. */
-  void RenderPropertiesPanel();
+  void RenderPropertiesPanel() const;
   /** Renders the menu bar for editor options. */
-  void RenderMenuBar(std::shared_ptr<Scene> scene);
+  void RenderMenuBar(const std::shared_ptr<Scene>& scene);
   void RenderAssetsPanel(); /** Renders the assets panel to browse files. */
 
   /** Updates the contents of the current directory. */
@@ -110,4 +111,6 @@ class Editor {
   std::shared_ptr<GameObject> m_selectedObject{nullptr};
 
   std::shared_ptr<SceneManager> m_sceneManager{nullptr};
+
+  std::shared_ptr<NotificationManager> m_notificationManager{nullptr};
 };

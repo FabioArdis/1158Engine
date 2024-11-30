@@ -1,6 +1,10 @@
 #pragma once
 
+#ifdef _WIN32 // God why
+#include <ft2build.h>
+#else
 #include <freetype2/ft2build.h>
+#endif
 #include <glm/glm.hpp>
 #include <map>
 #include <memory>
@@ -36,7 +40,7 @@ class TextRenderer {
 	 * 
 	 * @param shaderManager Pointer to the ShaderManager for shader handling.
 	 */
-  TextRenderer(std::shared_ptr<ShaderManager> shaderManager);
+  explicit TextRenderer(const std::shared_ptr<ShaderManager>& shaderManager);
 
   /**
 	 * @brief Destructs the TextRenderer and frees associated resources.

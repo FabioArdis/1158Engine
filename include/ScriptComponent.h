@@ -8,12 +8,13 @@ class ScriptBase;
 
 class ScriptComponent : public Component {
  private:
+  bool compiled = false;
   std::string m_ScriptName;
   void* m_DllHandle = nullptr;
   ScriptBase* m_Instance = nullptr;
   std::filesystem::file_time_type m_LastCompileTime;
 
-  void CompileAndLoad();
+  std::string CompileAndLoad();
   void UnloadScript();
   void CompileScript();
 
@@ -21,7 +22,7 @@ class ScriptComponent : public Component {
   [[nodiscard]] std::string GetCompiledPath() const;
 
  public:
-  explicit ScriptComponent(std::shared_ptr<GameObject> owner)
+  explicit ScriptComponent(const std::shared_ptr<GameObject>& owner)
       : Component(owner) {}
 
   ~ScriptComponent() override;
@@ -29,9 +30,9 @@ class ScriptComponent : public Component {
   [[nodiscard]] std::string GetName() const { return m_ScriptName; }
 
   void LoadScript(const std::string& scriptName);
-  void ReloadIfNeeded();
+  std::string ReloadIfNeeded();
 
-  ScriptBase* GetScriptInstance() { return m_Instance; }
+  ScriptBase* GetScriptInstance() const { return m_Instance; }
 
   void Update(float deltaTime) override;
 };

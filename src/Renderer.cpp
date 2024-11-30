@@ -34,16 +34,6 @@ Renderer::Renderer()
       m_nbFrames(0),
       m_fps(0.0),
       m_frameTime(0.0) {
-
-  // Initialize lights
-  m_lights.emplace_back(
-      Light(glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), 0.2f));
-  m_lights.emplace_back(
-      Light(glm::vec3(5.0f, 2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.2f));
-  m_lights.emplace_back(
-      Light(glm::vec3(5.0f, 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 1.0f), 0.2f));
-  m_lights.emplace_back(
-      Light(glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f, 1.0f, 1.0f), 0.2f));
 }
 
 Renderer::~Renderer() {
@@ -81,7 +71,7 @@ bool Renderer::Initialize() {
   glfwMakeContextCurrent(m_window);
 
   // Load OpenGL functions
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+  if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
     std::cerr << "Failed to initialize GLAD" << std::endl;
   }
 
@@ -133,18 +123,18 @@ void Renderer::SetLights(const std::vector<Light>& lights) {
   for (size_t i = 0; i < lights.size(); ++i) {
     std::string uniformName = "lights[" + std::to_string(i) + "]";
 
-    m_shaderManager->SetVector3((uniformName + ".position").c_str(),
+    m_shaderManager->SetVector3(uniformName + ".position",
                                 lights[i].GetPosition());
 
-    m_shaderManager->SetVector3((uniformName + ".color").c_str(),
+    m_shaderManager->SetVector3(uniformName + ".color",
                                 lights[i].GetColor());
 
-    m_shaderManager->SetFloat((uniformName + ".intensity").c_str(),
+    m_shaderManager->SetFloat(uniformName + ".intensity",
                               lights[i].GetIntensity());
   }
 }
 
-void Renderer::RenderObject(std::shared_ptr<GameObject> object) {
+void Renderer::RenderObject(const std::shared_ptr<GameObject>& object) const {
   auto* meshComponent = object->GetComponent<MeshComponent>();
 
   if (meshComponent != nullptr) {
@@ -168,7 +158,7 @@ bool Renderer::ShouldClose() {
   return glfwWindowShouldClose(m_window);
 }
 
-void Renderer::Render(std::shared_ptr<Scene> scene) {
+void Renderer::Render(const std::shared_ptr<Scene>& scene) {
   CalculateFPS();
 
   if (m_editor != nullptr) {
@@ -211,7 +201,7 @@ void Renderer::Render(std::shared_ptr<Scene> scene) {
         glm::radians(45.0f),
         static_cast<float>(screenWidth) / static_cast<float>(screenHeight),
         0.1f, 100.0f);
-    glm::mat4 model = glm::mat4(1.0f);
+    auto model = glm::mat4(1.0f);
 
     m_shaderManager->UseShader("default");
     m_shaderManager->SetMatrix4("view", view);
@@ -245,7 +235,7 @@ void Renderer::Render(std::shared_ptr<Scene> scene) {
 
   if (m_editor != nullptr) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    m_editor->Begin();
+    Editor::Begin();
     m_editor->Render(scene);
     Editor::End();
   }
@@ -265,7 +255,7 @@ void Renderer::CalculateFPS() {
   }
 }
 
-void Renderer::UpdateLights(std::shared_ptr<Scene> scene) {
+void Renderer::UpdateLights(const std::shared_ptr<Scene>& scene) {
   const unsigned int MAX_LIGHTS =
       m_shaderManager->GetUniformLocation("MAX_LIGHTS");
   std::vector<LightComponent*> sceneLights;
@@ -287,11 +277,11 @@ void Renderer::UpdateLights(std::shared_ptr<Scene> scene) {
     std::string uniformName = "lights[" + std::to_string(i) + "]";
     auto* light = sceneLights[i];
 
-    m_shaderManager->SetVector3((uniformName + ".position").c_str(),
+    m_shaderManager->SetVector3(uniformName + ".position",
                                 light->GetPosition());
-    m_shaderManager->SetVector3((uniformName + ".color").c_str(),
+    m_shaderManager->SetVector3(uniformName + ".color",
                                 light->GetColor());
-    m_shaderManager->SetFloat((uniformName + ".intensity").c_str(),
+    m_shaderManager->SetFloat(uniformName + ".intensity",
                               light->GetIntensity());
   }
 }

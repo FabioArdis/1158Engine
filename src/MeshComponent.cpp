@@ -1,6 +1,6 @@
 #include "MeshComponent.h"
 
-void MeshComponent::SetMesh(std::shared_ptr<Mesh> mesh) {
+void MeshComponent::SetMesh(const std::shared_ptr<Mesh>& mesh) {
   m_mesh = mesh;
 }
 

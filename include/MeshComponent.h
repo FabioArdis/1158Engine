@@ -56,7 +56,7 @@ class MeshComponent : public Component {
 	* 
 	* @param mesh The new mesh to be associated with this component.
 	*/
-  void SetMesh(std::shared_ptr<Mesh> mesh);
+  void SetMesh(const std::shared_ptr<Mesh>& mesh);
 
   /**
 	* @brief Clears the current mesh's data.

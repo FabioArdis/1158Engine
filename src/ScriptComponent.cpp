@@ -19,12 +19,12 @@ void ScriptComponent::LoadScript(const std::string& scriptName) {
   CompileAndLoad();
 }
 
-void ScriptComponent::ReloadIfNeeded() {
+std::string ScriptComponent::ReloadIfNeeded() {
   auto scriptPath = GetScriptPath();
 
   if (!std::filesystem::exists(scriptPath)) {
     // Handle error
-    return;
+    return "Error: " + scriptPath + " does not exist.";
   }
 
   auto currentTime = std::filesystem::last_write_time(scriptPath);
@@ -32,6 +32,8 @@ void ScriptComponent::ReloadIfNeeded() {
   if (currentTime > m_LastCompileTime) {
     CompileAndLoad();
   }
+
+  return "";
 }
 
 std::string ScriptComponent::GetScriptPath() const {
@@ -50,8 +52,8 @@ void ScriptComponent::CompileScript() {
   std::filesystem::create_directories("scripts/compiled");
 
 #ifdef _WIN32  // I... don't really want to think about this right now.
-  std::string command = "cl.exe /LD /I../../include /std:c++17" +
-                        GetScriptPath() + " /Fe" + GetCompiledPath();
+  std::string command = R"(g++ -fPIC -shared -std=c++17 -Iinclude -IC:\libs\GLM\ -O3 )" +
+                        GetScriptPath() + " -o " + GetCompiledPath();
 #else
   std::string command = "g++ -fPIC -shared -std=c++17 -Iinclude -O3 " +
                         GetScriptPath() + " -o " + GetCompiledPath();
@@ -78,7 +80,8 @@ void ScriptComponent::UnloadScript() {
 
 #ifdef _WIN32
     auto destroyScript =
-        (DestroyScriptFn)GetProcAddress((HMODULE)m_DllHandle, "DestroyScript");
+        reinterpret_cast<DestroyScriptFn>(
+        GetProcAddress(static_cast<HMODULE>(m_DllHandle), "DestroyScript"));
 #else
     auto destroyScript = (DestroyScriptFn)dlsym(m_DllHandle, "DestroyScript");
 #endif
@@ -102,8 +105,11 @@ void ScriptComponent::UnloadScript() {
   }
 }
 
-void ScriptComponent::CompileAndLoad() {
+std::string ScriptComponent::CompileAndLoad() {
   try {
+    // std::cout << "start UnloadScript()\n";
+    UnloadScript();
+
     // std::cout << "start CompileScript()\n";
     CompileScript();
 
@@ -119,20 +125,20 @@ void ScriptComponent::CompileAndLoad() {
 
     // std::cout << "check dlopen(): GetCompiledPath:" + GetCompiledPath();
     if (m_DllHandle == nullptr) {
+      compiled = false;
       // std::cerr << "dlopen error: " << dlerror() << std::endl;
-      throw std::runtime_error("Failed to load script library: " +
-                               m_ScriptName + "(" + GetCompiledPath() + ")");
+      return "Failed to load script library: " + m_ScriptName + "(" + GetCompiledPath() + ")";
     }
 
 #ifdef _WIN32
-    auto createScript = (ScriptBase * (*)())
-        GetProcAddress((HMODULE)m_DllHandle, "CreateScript");
+    auto createScript = reinterpret_cast<ScriptBase* (*)()>(
+        GetProcAddress(static_cast<HMODULE>(m_DllHandle), "CreateScript"));
 #else
     auto createScript = (ScriptBase * (*)()) dlsym(m_DllHandle, "CreateScript");
 #endif
 
     if (createScript == nullptr) {
-      throw std::runtime_error("Failed to get CreateScript functon");
+      throw std::runtime_error("Failed to get CreateScript function");
     }
 
     m_Instance = createScript();
@@ -149,11 +155,16 @@ void ScriptComponent::CompileAndLoad() {
 
     m_LastCompileTime = std::filesystem::last_write_time(GetScriptPath());
   } catch (const std::exception& e) {
+    compiled = false;
     UnloadScript();
     throw;
   }
+
+  compiled = true;
+  return "";
 }
 
 void ScriptComponent::Update(float deltaTime) {
-  m_Instance->OnUpdate(deltaTime);
+  if (compiled)
+    m_Instance->OnUpdate(deltaTime);
 }

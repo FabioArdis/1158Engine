@@ -55,7 +55,7 @@ class Renderer {
 	* 
 	* @param scene The scene to render.
 	*/
-  void Render(std::shared_ptr<Scene> scene);
+  void Render(const std::shared_ptr<Scene>& scene);
 
   /**
 	* @brief Sets the camera for the Renderer.
@@ -80,7 +80,7 @@ class Renderer {
 
   [[nodiscard]] GLFWwindow* GetWindow() const { return m_window; }
 
-  void UpdateLights(std::shared_ptr<Scene> scene);
+  void UpdateLights(const std::shared_ptr<Scene>& scene);
 
  private:
   GLFWwindow* m_window; /**Pointer to the GLFW window. */
@@ -102,7 +102,7 @@ class Renderer {
 	* 
 	* @param object The GameObject to render.
 	*/
-  void RenderObject(std::shared_ptr<GameObject> object);
+  void RenderObject(const std::shared_ptr<GameObject>& object) const;
 
   double m_lastTime;  /**Last recorded time for FPS calculations. */
   int m_nbFrames;     /**Number of frames rendered in the last second. */

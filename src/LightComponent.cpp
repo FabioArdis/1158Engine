@@ -2,7 +2,7 @@
 
 #include "GameObject.h"
 
-LightComponent::LightComponent(std::shared_ptr<GameObject> owner)
+LightComponent::LightComponent(const std::shared_ptr<GameObject>& owner)
     : Component(owner),
       m_color(1.0f, 1.0f, 1.0f),
       m_intensity(1.0f),
@@ -10,8 +10,7 @@ LightComponent::LightComponent(std::shared_ptr<GameObject> owner)
 
 void LightComponent::Update(float deltaTime) {
   // Sync light's position and direction with the owner's transform
-  auto owner = m_owner.lock();
-  if (owner) {
+  if (auto owner = m_owner.lock()) {
     auto* transform = owner->GetComponent<TransformComponent>();
 
     if (transform != nullptr) {

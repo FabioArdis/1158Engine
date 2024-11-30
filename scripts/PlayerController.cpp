@@ -54,7 +54,7 @@ public:
     }
 
 private:
-    float m_Speed = 0.1f;
+    float m_Speed = 10.0f;
     float m_Health = 100.0f;
     float m_stuff = 100.0f;
 

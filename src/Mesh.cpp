@@ -162,15 +162,15 @@ void Mesh::CreateCapsule(float radius, float height, int segments, int rings) {
   m_vertices.clear();
   m_indices.clear();
 
-  const float PI = 3.14159265359f;
+  constexpr float PI = 3.14159265359f;
   const int verticalSegments = segments;
   const int horizontalSegments = rings;
   const float halfHeight = height * 0.5f;
 
   for (int ring = 0; ring <= horizontalSegments / 2; ++ring) {
-    float phi = PI * float(ring) / float(horizontalSegments);
+    float phi = PI * static_cast<float>(ring) / static_cast<float>(horizontalSegments);
     for (int segment = 0; segment <= verticalSegments; ++segment) {
-      float theta = 2.0f * PI * float(segment) / float(verticalSegments);
+      float theta = 2.0f * PI * static_cast<float>(segment) / static_cast<float>(verticalSegments);
 
       float x = radius * sin(phi) * cos(theta);
       float y = radius * cos(phi) + halfHeight;
@@ -192,7 +192,7 @@ void Mesh::CreateCapsule(float radius, float height, int segments, int rings) {
   for (int ring = 0; ring <= 1; ++ring) {
     float y = halfHeight - ring * height;
     for (int segment = 0; segment <= verticalSegments; ++segment) {
-      float theta = 2.0f * PI * float(segment) / float(verticalSegments);
+      float theta = 2.0f * PI * static_cast<float>(segment) / static_cast<float>(verticalSegments);
 
       float x = radius * cos(theta);
       float z = radius * sin(theta);
@@ -211,9 +211,9 @@ void Mesh::CreateCapsule(float radius, float height, int segments, int rings) {
   }
 
   for (int ring = horizontalSegments / 2; ring <= horizontalSegments; ++ring) {
-    float phi = PI * float(ring) / float(horizontalSegments);
+    float phi = PI * static_cast<float>(ring) / static_cast<float>(horizontalSegments);
     for (int segment = 0; segment <= verticalSegments; ++segment) {
-      float theta = 2.0f * PI * float(segment) / float(verticalSegments);
+      float theta = 2.0f * PI * static_cast<float>(segment) / static_cast<float>(verticalSegments);
 
       float x = radius * sin(phi) * cos(theta);
       float y = radius * cos(phi) - halfHeight;
@@ -232,9 +232,9 @@ void Mesh::CreateCapsule(float radius, float height, int segments, int rings) {
     }
   }
 
-  int topOffset = 0;
   for (int ring = 0; ring < horizontalSegments / 2; ++ring) {
     for (int segment = 0; segment < verticalSegments; ++segment) {
+      int topOffset = 0;
       int current = ring * (verticalSegments + 1) + segment;
       int next = current + (verticalSegments + 1);
 
