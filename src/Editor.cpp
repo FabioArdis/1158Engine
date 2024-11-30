@@ -318,7 +318,18 @@ void Editor::RenderPropertiesPanel() const {
     std::string popupId =
         "add component menu" + std::to_string(m_selectedObject->GetID());
 
-    ImGui::Text("Selected: %s", m_selectedObject->GetName().c_str());
+    //ImGui::Text("Selected: %s", m_selectedObject->GetName().c_str());
+
+    std::string strName = m_selectedObject->GetName();
+    constexpr size_t bufferSize = 256;
+    std::array<char, bufferSize> buffer = {};
+
+    strName.copy(buffer.data(), bufferSize - 1);
+    buffer[std::min(strName.length(), bufferSize - 1)] = '\0';  // Ensure null-termination
+
+    if (ImGui::InputText((" Name##" + std::to_string(m_selectedObject->GetID())).c_str(), buffer.data(), bufferSize)) {
+      m_selectedObject->SetName(buffer.data());
+    }
 
     std::string errorMessage;
 

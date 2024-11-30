@@ -12,6 +12,13 @@ public:
             std::cerr << "TransformComponent is not available!" << std::endl;
             return;
         }
+
+        if (nome == "ciao") {
+          transform->SetScale(glm::vec3(1.5f, 1.5f, 1.5f));
+        } else {
+          transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
+        }
+
         if (transform->GetPosition().z >= maxRange)
         {
             isIncreasing = false;
@@ -38,6 +45,7 @@ public:
             {"minRange", PropertyType::Float},
             {"maxRange", PropertyType::Float},
             {"isIncreasing", PropertyType::Bool},
+            {"nome", PropertyType::String},
         };
     }
 
@@ -49,6 +57,7 @@ public:
         if (name == "isIncreasing") return &isIncreasing;
         if (name == "minRange") return &minRange;
         if (name == "maxRange") return &maxRange;
+        if (name == "nome") return &nome;
 
         return nullptr;
     }
@@ -62,6 +71,8 @@ private:
     float minRange = -10.0f;
 
     bool isIncreasing = true;
+
+    std::string nome = "Ciao!";
 };
 
 extern "C"
